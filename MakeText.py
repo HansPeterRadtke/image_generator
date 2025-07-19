@@ -1,50 +1,54 @@
+import sys
 import os
 import random
-import argparse
+import traceback
 from PIL import Image, ImageDraw, ImageFont
 
-def parse_args():
-  parser = argparse.ArgumentParser(description='Render text to PNG image with transparency')
-  parser.add_argument('text'       , type=str  , help='Text to render')
-  parser.add_argument('--width'   , type=int  , default=400 , help='Image width')
-  parser.add_argument('--height'  , type=int  , default=200 , help='Image height')
-  parser.add_argument('--fontsize', type=int  , default=32  , help='Font size')
-  parser.add_argument('--font'    , type=str  , default='DejaVuSans.ttf', help='Font family (must be installed)')
-  parser.add_argument('--align_x' , type=str  , default='center', choices=['left', 'center', 'right'])
-  parser.add_argument('--align_y' , type=str  , default='center', choices=['top', 'center', 'bottom'])
-  parser.add_argument('--italic'  , action='store_true', help='Render italic text')
-  parser.add_argument('--rotate'  , type=int  , default=0, help='Rotation angle in degrees')
-  return parser.parse_args()
-
-def compute_position(draw, text, font, width, height, align_x, align_y):
-  bbox = draw.textbbox((0, 0), text, font=font)
-  text_w = bbox[2] - bbox[0]
-  text_h = bbox[3] - bbox[1]
-  x = {'left': 0, 'center': (width - text_w) // 2, 'right': width - text_w}[align_x]
-  y = {'top': 0 , 'center': (height - text_h) // 2, 'bottom': height - text_h}[align_y]
-  return x, y
-
 def main():
-  args = parse_args()
-  image = Image.new('RGBA', (args.width, args.height), (0, 0, 0, 0))  # Transparent
-  draw  = ImageDraw.Draw(image)
-
   try:
-    font = ImageFont.truetype(args.font, args.fontsize)
-  except Exception as e:
-    print(f"Font error: {e}\nFalling back to default font.")
-    font = ImageFont.load_default()
+    if len(sys.argv) < 2:
+      print("Usage: MakeText.py 'text' [width height fontsize align rotation font]", flush=True)
+      sys.exit(1)
 
-  pos = compute_position(draw, args.text, font, args.width, args.height, args.align_x, args.align_y)
-  draw.text(pos, args.text, font=font, fill=(0, 0, 0, 255))  # Black text
+    text     = sys.argv[1]
+    width    = int(sys.argv[2])  if len(sys.argv) > 2 else 400
+    height   = int(sys.argv[3])  if len(sys.argv) > 3 else 200
+    fontsize = int(sys.argv[4])  if len(sys.argv) > 4 else 40
+    align    = sys.argv[5]       if len(sys.argv) > 5 else 'center'
+    rotation = int(sys.argv[6])  if len(sys.argv) > 6 else 0
+    fontname = sys.argv[7]       if len(sys.argv) > 7 else '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf'
 
-  if args.rotate:
-    image = image.rotate(args.rotate, expand=True)
+    img = Image.new("RGBA", (width, height), (255, 255, 255, 0))
+    draw = ImageDraw.Draw(img)
+    font = ImageFont.truetype(fontname, fontsize)
+    bbox = draw.textbbox((0, 0), text, font=font)
+    w, h = bbox[2] - bbox[0], bbox[3] - bbox[1]
 
-  fname = f"text_{random.randint(1000,9999)}.png"
-  outpath = os.path.join("/var/www/html/images", fname)
-  image.save(outpath)
-  print(f"Saved: {outpath}")
+    if align == 'center':
+      position = ((width - w) // 2, (height - h) // 2)
+    elif align == 'topleft':
+      position = (0, 0)
+    elif align == 'topright':
+      position = (width - w, 0)
+    elif align == 'bottomleft':
+      position = (0, height - h)
+    elif align == 'bottomright':
+      position = (width - w, height - h)
+    else:
+      position = ((width - w) // 2, (height - h) // 2)
+
+    draw.text(position, text, font=font, fill=(255, 255, 255, 255))
+    img = img.rotate(rotation, expand=True)
+
+    outname = f"text_{random.randint(1000,9999)}.png"
+    outpath = os.path.join("/var/www/html/images", outname)
+    img.save(outpath)
+    print(f"Saved: {outpath}", flush=True)
+    print(f"result='{outpath}'", flush=True)
+
+  except Exception:
+    print("Error in MakeText:", flush=True)
+    print(traceback.format_exc(), flush=True)
 
 if __name__ == '__main__':
   main()
