@@ -4,16 +4,24 @@ import urllib.parse
 import random
 import traceback
 import hashlib
+import argparse
+
+def parse_args():
+  parser = argparse.ArgumentParser()
+  parser.add_argument("prompt"    , type=str)
+  parser.add_argument("save_path", type=str)
+  return parser.parse_args()
 
 def make_ai_image(
   prompt              ,
-  base_url      = "https://pollinations.ai/p/",
-  save_dir      = "/var/www/html/images"      ,
-  file_prefix   = "ai_"                        ,
-  file_ext      = ".jpg"                      ,
-  timeout       = 60                           ,
-  add_hash      = True                         ,
-  random_range  = (1000, 9999)
+  save_path    = None,
+  base_url     = "https://pollinations.ai/p/",
+  save_dir     = "/var/www/html/images"      ,
+  file_prefix  = "ai_"                        ,
+  file_ext     = ".jpg"                      ,
+  timeout      = 60                           ,
+  add_hash     = True                         ,
+  random_range = (1000, 9999)
 ):
   try:
     encoded_prompt = urllib.parse.quote(prompt)
@@ -30,9 +38,13 @@ def make_ai_image(
     rand_num = random.randint(*random_range)
     hash_tag = f"_{digest[:8]}" if add_hash else ""
     filename = f"{file_prefix}{rand_num}{hash_tag}{file_ext}"
-    outpath  = os.path.join(save_dir, filename)
 
-    os.makedirs(save_dir, exist_ok=True)
+    if save_path:
+      outpath = save_path
+    else:
+      outpath = os.path.join(save_dir, filename)
+
+    os.makedirs(os.path.dirname(outpath) or '.', exist_ok=True)
     with open(outpath, 'wb') as f:
       f.write(content)
 

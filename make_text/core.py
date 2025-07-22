@@ -1,61 +1,86 @@
 import os
 import random
 import traceback
+import argparse
 from PIL import Image, ImageDraw, ImageFont, ImageColor
 
+def parse_args():
+  parser = argparse.ArgumentParser()
+  parser.add_argument("text"      , type=str)
+  parser.add_argument("width"     , type=int)
+  parser.add_argument("height"    , type=int)
+  parser.add_argument("font_size", type=int)
+  parser.add_argument("position" , type=str)
+  parser.add_argument("outline"   , type=int)
+  parser.add_argument("color"     , type=str)
+  parser.add_argument("save_path", type=str)
+  return parser.parse_args()
+
+def parse_args_grouped():
+  parser = argparse.ArgumentParser()
+  parser.add_argument("text"      , type=str)
+  parser.add_argument("width"     , type=int)
+  parser.add_argument("height"    , type=int)
+  parser.add_argument("font_size", type=int)
+  parser.add_argument("position" , type=str)
+  parser.add_argument("outline"   , type=int)
+  parser.add_argument("color"     , type=str)
+  parser.add_argument("save_path", type=str)
+  return parser.parse_args()
+
 def make_text(
-  text               ,
-  width        = 400 ,
-  height       = 200 ,
-  fontsize     = 40  ,
-  align        = 'center',
-  rotation     = 0   ,
-  fontcolor    = '#FFFFFF',
-  font_path    = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
-  save_dir     = "/var/www/html/images" ,
-  file_prefix  = "text_" ,
-  file_ext     = ".png" ,
-  random_range = (1000, 9999)
+  text,
+  width,
+  height,
+  font_size,
+  position,
+  outline,
+  color,
+  save_path
 ):
   try:
-    img   = Image.new("RGBA", (width, height), (255, 255, 255, 0))
+    print("[DEBUG make_text] text=", text)
+    print("[DEBUG make_text] width=", width, "height=", height)
+    print("[DEBUG make_text] font_size=", font_size, "position=", position)
+    print("[DEBUG make_text] outline=", outline, "color=", color)
+    print("[DEBUG make_text] save_path=", save_path)
+
+    img   = Image.new("RGBA", (int(width), int(height)), (255, 255, 255, 0))
     draw  = ImageDraw.Draw(img)
-    font  = ImageFont.truetype(font_path, fontsize)
+    font  = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", int(font_size))
 
     bbox  = draw.textbbox((0, 0), text, font=font)
     w, h  = bbox[2] - bbox[0], bbox[3] - bbox[1]
 
-    if align == 'center':
-      position = ((width - w) // 2, (height - h) // 2)
-    elif align == 'topleft':
-      position = (0, 0)
-    elif align == 'topright':
-      position = (width - w, 0)
-    elif align == 'bottomleft':
-      position = (0, height - h)
-    elif align == 'bottomright':
-      position = (width - w, height - h)
+    if position == 'center':
+      pos = ((int(width) - w) // 2, (int(height) - h) // 2)
+    elif position == 'topleft':
+      pos = (0, 0)
+    elif position == 'topright':
+      pos = (int(width) - w, 0)
+    elif position == 'bottomleft':
+      pos = (0, int(height) - h)
+    elif position == 'bottomright':
+      pos = (int(width) - w, int(height) - h)
     else:
-      position = ((width - w) // 2, (height - h) // 2)
+      pos = ((int(width) - w) // 2, (int(height) - h) // 2)
 
     try:
-      rgb = ImageColor.getrgb(fontcolor)
+      rgb = ImageColor.getrgb(color)
       fillcolor = rgb + (255,)
     except:
       fillcolor = (255, 255, 255, 255)
 
-    draw.text(position, text, font=font, fill=fillcolor)
-    img = img.rotate(rotation, expand=True)
+    draw.text(pos, text, font=font, fill=fillcolor)
+    img = img.rotate(int(outline), expand=True)
 
-    rand_num = random.randint(*random_range)
-    filename = f"{file_prefix}{rand_num}{file_ext}"
-    outpath  = os.path.join(save_dir, filename)
-
-    os.makedirs(save_dir, exist_ok=True)
-    img.save(outpath)
-    print(f"Saved: {outpath}"    , flush=True)
-    print(f"result='{outpath}'", flush=True)
-    return outpath
+    directory = os.path.dirname(save_path)
+    if directory:
+      os.makedirs(directory, exist_ok=True)
+    img.save(save_path)
+    print(f"Saved: {save_path}"    , flush=True)
+    print(f"result='{save_path}'", flush=True)
+    return save_path
 
   except Exception:
     print("Error in make_text:" , flush=True)
