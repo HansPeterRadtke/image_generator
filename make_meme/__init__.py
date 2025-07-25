@@ -1,1 +1,0 @@
-from .core import generate_with_scripts

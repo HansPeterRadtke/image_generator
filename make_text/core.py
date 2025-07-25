@@ -1,88 +1,50 @@
 import os
-import random
+from PIL import Image, ImageDraw, ImageFont
 import traceback
-import argparse
-from PIL import Image, ImageDraw, ImageFont, ImageColor
 
-def parse_args():
-  parser = argparse.ArgumentParser()
-  parser.add_argument("text"      , type=str)
-  parser.add_argument("width"     , type=int)
-  parser.add_argument("height"    , type=int)
-  parser.add_argument("font_size", type=int)
-  parser.add_argument("position" , type=str)
-  parser.add_argument("outline"   , type=int)
-  parser.add_argument("color"     , type=str)
-  parser.add_argument("save_path", type=str)
-  return parser.parse_args()
-
-def parse_args_grouped():
-  parser = argparse.ArgumentParser()
-  parser.add_argument("text"      , type=str)
-  parser.add_argument("width"     , type=int)
-  parser.add_argument("height"    , type=int)
-  parser.add_argument("font_size", type=int)
-  parser.add_argument("position" , type=str)
-  parser.add_argument("outline"   , type=int)
-  parser.add_argument("color"     , type=str)
-  parser.add_argument("save_path", type=str)
-  return parser.parse_args()
-
-def make_text(
-  text,
-  width,
-  height,
-  font_size,
-  position,
-  outline,
-  color,
-  save_path
-):
+def make_text(text, width=400, height=200, fontsize=20, align="center", rotation=0,
+              fontcolor="#000000", padding=10,
+              font="/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+              save_path="output.png"):
   try:
-    print("[DEBUG make_text] text=", text)
-    print("[DEBUG make_text] width=", width, "height=", height)
-    print("[DEBUG make_text] font_size=", font_size, "position=", position)
-    print("[DEBUG make_text] outline=", outline, "color=", color)
-    print("[DEBUG make_text] save_path=", save_path)
-
-    img   = Image.new("RGBA", (int(width), int(height)), (255, 255, 255, 0))
-    draw  = ImageDraw.Draw(img)
-    font  = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", int(font_size))
-
-    bbox  = draw.textbbox((0, 0), text, font=font)
-    w, h  = bbox[2] - bbox[0], bbox[3] - bbox[1]
-
-    if position == 'center':
-      pos = ((int(width) - w) // 2, (int(height) - h) // 2)
-    elif position == 'topleft':
-      pos = (0, 0)
-    elif position == 'topright':
-      pos = (int(width) - w, 0)
-    elif position == 'bottomleft':
-      pos = (0, int(height) - h)
-    elif position == 'bottomright':
-      pos = (int(width) - w, int(height) - h)
-    else:
-      pos = ((int(width) - w) // 2, (int(height) - h) // 2)
+    print("[make_text] Starting with params:", locals())
+    img = Image.new("RGBA", (width, height), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(img)
 
     try:
-      rgb = ImageColor.getrgb(color)
-      fillcolor = rgb + (255,)
-    except:
-      fillcolor = (255, 255, 255, 255)
+      font_obj = ImageFont.truetype(font, fontsize)
+    except Exception as fe:
+      print("[make_text] Font load error:", str(fe))
+      font_obj = ImageFont.load_default()
 
-    draw.text(pos, text, font=font, fill=fillcolor)
-    img = img.rotate(int(outline), expand=True)
+    text_bbox = draw.textbbox((0, 0), text, font=font_obj)
+    text_width = text_bbox[2] - text_bbox[0]
+    text_height = text_bbox[3] - text_bbox[1]
 
-    directory = os.path.dirname(save_path)
-    if directory:
-      os.makedirs(directory, exist_ok=True)
-    img.save(save_path)
-    print(f"Saved: {save_path}"    , flush=True)
-    print(f"result='{save_path}'", flush=True)
+    if align == "center":
+      position = ((width - text_width) // 2, (height - text_height) // 2)
+    elif align == "topleft":
+      position = (padding, padding)
+    elif align == "bottomright":
+      position = (width - text_width - padding, height - text_height - padding)
+    else:
+      position = (padding, padding)
+
+    temp_img = Image.new("RGBA", img.size, (0, 0, 0, 0))
+    temp_draw = ImageDraw.Draw(temp_img)
+    temp_draw.text(position, text, font=font_obj, fill=fontcolor)
+
+    rotated = temp_img.rotate(rotation, expand=1)
+    final_img = Image.new("RGBA", rotated.size, (0, 0, 0, 0))
+    final_img.paste(rotated, (0, 0), rotated)
+
+    dirpath = os.path.dirname(save_path)
+    if dirpath:
+      os.makedirs(dirpath, exist_ok=True)
+    final_img.save(save_path)
+    print("[make_text] Image saved to", save_path)
     return save_path
-
-  except Exception:
-    print("Error in make_text:" , flush=True)
-    print(traceback.format_exc(), flush=True)
+  except Exception as e:
+    print("[make_text] Error:", str(e))
+    print(traceback.format_exc())
     return None

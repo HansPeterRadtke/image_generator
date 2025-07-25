@@ -1,16 +1,30 @@
-import os, sys, traceback
-sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
+import argparse
+import traceback
+from make_ai_image.core import make_image
 
-from core import parse_args, make_ai_image
+def parse_args():
+  parser = argparse.ArgumentParser(description="AI Image Generator")
+  parser.add_argument("--prompt", type=str, default="")
+  parser.add_argument("--width", type=int, default=512)
+  parser.add_argument("--height", type=int, default=512)
+  parser.add_argument("--output", type=str, default="output.jpg")
+  return parser.parse_args()
 
-if __name__ == "__main__":
+def main():
+  print("[DEBUG] CLI main called")
   try:
     args = parse_args()
-    result_image = make_ai_image(prompt=args.prompt, save_path=args.save_path)
-    if result_image is None:
-      print("[ERROR] make_ai_image returned None", flush=True)
-    else:
-      print("result='" + result_image + "'", flush=True)
+    result = make_image(
+      prompt=args.prompt,
+      width=args.width,
+      height=args.height,
+      output=args.output
+    )
+    if result:
+      print(f"result='{result}'")
   except Exception as e:
-    print("[EXCEPTION in make_ai_image __main__]", flush=True)
-    print(traceback.format_exc(), flush=True)
+    print("[EXCEPTION]", str(e))
+    print("[TRACEBACK]", traceback.format_exc())
+
+if __name__ == '__main__':
+  main()

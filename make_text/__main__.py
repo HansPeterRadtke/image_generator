@@ -1,26 +1,39 @@
-import os, sys, traceback
-print("[DEBUG __main__] sys.argv:", sys.argv)
-sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
+import argparse
+from make_text.core import make_text
+import traceback
 
-from core import parse_args_grouped, make_text
-
-if __name__ == "__main__":
+if __name__ == '__main__':
+  print("[make_text.__main__] CLI started")
   try:
-    args = parse_args_grouped()
-    result_image = make_text(
-      args.text,
-      args.width,
-      args.height,
-      args.font_size,
-      args.position,
-      args.outline,
-      args.color,
-      args.save_path
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--text'     , default="Hello World")
+    parser.add_argument('--width'    , type=int, default=400)
+    parser.add_argument('--height'   , type=int, default=200)
+    parser.add_argument('--rotation' , type=int, default=0)
+    parser.add_argument('--alignment', default="center")
+    parser.add_argument('--padding'  , type=int, default=10)
+    parser.add_argument('--color'    , default="#000000")
+    parser.add_argument('--font'     , default="/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf")
+    parser.add_argument('--output'   , default="output.png")
+    args = parser.parse_args()
+
+    print("[make_text.__main__] Parsed args:", vars(args))
+
+    result = make_text(
+      text      = args.text,
+      width     = args.width,
+      height    = args.height,
+      rotation  = args.rotation,
+      align     = args.alignment,
+      padding   = args.padding,
+      font      = args.font,
+      fontcolor = args.color,
+      save_path = args.output
     )
-    if result_image is None:
-      print("[ERROR] make_text returned None", flush=True)
+    if result:
+      print(f"result='{result}'")
     else:
-      print("result='" + result_image + "'", flush=True)
+      print("[make_text.__main__] No result generated")
   except Exception as e:
-    print("[EXCEPTION in make_text __main__]", flush=True)
-    print(traceback.format_exc(), flush=True)
+    print("[make_text.__main__] EXCEPTION:", str(e))
+    print(traceback.format_exc())

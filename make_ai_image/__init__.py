@@ -1,1 +1,1 @@
-from .core import make_ai_image
+from .core import make_image
