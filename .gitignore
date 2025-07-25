@@ -8,3 +8,11 @@ build/
 local.properties
 __pycache__/
 *.pyc
+
+# Ignore generated and temp files
+result_*.jpg
+result_*.png
+temp_*.jpg
+temp_*.png
+test_*.jpg
+test_*.png
