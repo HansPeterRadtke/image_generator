@@ -33,7 +33,8 @@ def make_image(prompt,
                random_range = (1000, 9999)):
   try:
     encoded_prompt = urllib.parse.quote(prompt)
-    url            = f"{base_url}{encoded_prompt}?nologo=true"
+    seed           = random.randint(0, 999999)
+    url            = f"{base_url}{encoded_prompt}?nologo=true&seed={seed}"
     print         (f"Requesting: {url}"                                     , flush=True)
 
     response = requests.get(url, timeout=timeout, stream=True)
