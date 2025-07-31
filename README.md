@@ -1,106 +1,155 @@
 # Image Generator Project
 
-This project is a modular image generation toolkit built in Python. It provides the following components:
-
-- `make_ai_image`: Fetches AI-generated images from a remote service.
-- `make_text`: Creates text-based transparent overlays.
-- `make_meme`: Composes memes by combining AI images and text.
-- `generate_images.py`: Randomly generates geometric images.
-
-All modules can be used as command-line tools or as importable Python modules.
+This modular toolkit generates and composes images through AI, text overlays, and basic shapes. Each module works both via CLI and as a Python import.
 
 ---
 
 ## Installation
 
-Install dependencies using:
+You must have:
+- `Pillow`
+- `requests`
 
+To install dependencies:
 ```bash
-pip install -r requirements.txt
+pip install pillow requests
 ```
-
-Make sure `Pillow` and `requests` are installed.
 
 ---
 
 ## 1. generate_images.py
-Generates random images with colored rectangles in different formats.
 
-### CLI usage:
+Generates geometric images with random rectangles and colors.
+
+### CLI Usage:
 ```bash
 python3 generate_images.py
 ```
-Saves images in JPEG, PNG, and GIF formats to `/var/www/html/images`.
+
+**Output:** Saves JPEG, PNG, and GIF images to `/var/www/html/images`
+
+**Parameters:** None.
 
 ---
 
 ## 2. make_ai_image
-Fetches an AI-generated image based on a text prompt from `pollinations.ai`.
 
-### CLI usage:
+Fetches an AI-generated image using `pollinations.ai` and saves it locally.
+
+### CLI Usage:
 ```bash
 python3 -m make_ai_image --prompt "a futuristic city" --width 512 --height 512 --output ./output.jpg
 ```
 
-### Import usage:
+**Parameters:**
+- `--prompt` (str, required): text prompt to generate the image.
+- `--width` (int, default=512): image width in pixels.
+- `--height` (int, default=512): image height in pixels.
+- `--output` (str, default="output.jpg"): path to save the image.
+
+### Python Import Usage:
 ```python
 from make_ai_image import make_image
 
-make_image(prompt="sunset beach", width=640, height=480, output="ai_image.jpg")
+make_image(
+  prompt        = "sunset beach",
+  width         = 640,
+  height        = 480,
+  output        = "ai_image.jpg",
+  base_url      = "https://pollinations.ai/p/",
+  save_dir      = "/var/www/html/images",
+  file_prefix   = "ai_",
+  file_ext      = ".jpg",
+  timeout       = 60,
+  add_hash      = True,
+  random_range  = (1000, 9999)
+)
 ```
-
-### Optional arguments:
-- `base_url`: Service base URL
-- `save_dir`: Directory to save output
-- `file_prefix`, `file_ext`: Naming
-- `timeout`: Request timeout
-- `add_hash`: Whether to append a hash to filename
-- `random_range`: Tuple for random ID suffix
 
 ---
 
 ## 3. make_text
-Creates transparent PNGs with overlay text.
 
-### CLI usage:
+Creates a transparent PNG image with overlayed text.
+
+### CLI Usage:
 ```bash
 python3 -m make_text --text "Top Meme" --width 500 --height 250 --output ./text.png
 ```
 
-### Import usage:
+**Parameters:**
+- `--text` (str, required): the text content.
+- `--width` (int, default=512): image width in pixels.
+- `--height` (int, default=512): image height in pixels.
+- `--rotation` (int, default=0): rotation angle in degrees.
+- `--align` (str, default="center"): text alignment.
+- `--padding` (int, default=10): padding in pixels.
+- `--color` (str, default="#000000"): hex color code.
+- `--font` (str, optional): path to a TTF font file.
+- `--output` (str, required): path to save the PNG.
+
+### Python Import Usage:
 ```python
 from make_text import make_text
 
-make_text(text="Overlay", width=400, height=200, save_path="text_overlay.png")
+make_text(
+  text       = "Overlay Text",
+  width      = 400,
+  height     = 200,
+  rotation   = 15,
+  align      = "topright",
+  padding    = 20,
+  fontcolor  = "#FF00FF",
+  font       = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+  save_path  = "/var/www/html/images/text.png"
+)
 ```
-
-### Optional arguments:
-- `rotation`: Rotate text
-- `alignment`: Position (center, topleft, bottomright)
-- `padding`: Margin
-- `color`: Text color
-- `font`: Font path
 
 ---
 
 ## 4. make_meme
-Creates a meme by combining an AI-generated image and a text overlay.
 
-### CLI usage:
+Combines AI image and text overlay into a single meme image.
+
+### CLI Usage:
 ```bash
-python3 -m make_meme --text "Hello" --prompt "sunset city" --save_dir ./output
+python3 -m make_meme \
+  --text "Hello" \
+  --prompt "sunset city" \
+  --save_dir ./output \
+  --text_args "--width 500 --height 250" \
+  --file_prefix meme \
+  --file_ext .jpg
 ```
 
-### Import usage:
+**Parameters:**
+- `--text` (str, required): text to render.
+- `--prompt` (str, required): prompt for the AI image.
+- `--text_args` (str, optional): quoted string of CLI args for make_text.
+- `--image_args` (str, optional): quoted string of CLI args for make_ai_image.
+- `--save_dir` (str, default="."): directory to save all images.
+- `--file_prefix` (str, default="result_"): prefix for all outputs.
+- `--file_ext` (str, default=".png"): file extension for all outputs.
+
+### Python Import Usage:
 ```python
 from make_meme import make_meme
 
-make_meme(text="Caption", prompt="futuristic scene", save_dir="./output")
+make_meme(
+  text        = "Caption here",
+  prompt      = "futuristic architecture",
+  text_args   = ["--width", "500"],
+  image_args  = ["--width", "400", "--height", "400"],
+  save_dir    = "./output",
+  file_prefix = "demo",
+  file_ext    = ".jpg"
+)
 ```
 
-### Notes:
-- Internally calls `make_text` and `make_ai_image` via subprocess.
-- Output includes `_text`, `_ai`, and `_final` image files.
+**Output files:**
+- `<prefix>_text.<ext>`
+- `<prefix>_ai.<ext>`
+- `<prefix>_final.<ext>`
 
 ---
 
@@ -124,15 +173,6 @@ image_generator/
 │   ├── test_make_*.py
 ├── setup.py
 ```
-
----
-
-## Output Example
-- `result_text.png`: text overlay
-- `result_ai.png`: AI-generated image
-- `result_final.png`: combined meme
-
-All images default to saving in `/var/www/html/images`, unless overridden.
 
 ---
 
